@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DzTimbratore</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@simplewebauthn/browser@9.0.1/dist/bundle/index.umd.min.js"></script>
+</head>
+<body>
+    <div id="app">
+        <div id="loading-view" class="view view-centered active">
+            <div class="spinner"></div>
+        </div>
+
+        <div id="login-view" class="view view-centered">
+            <div class="card" style="max-width: 400px;">
+                <h2 style="text-align: center; border: none; margin-bottom: 20px;">DzTimbratore</h2>
+                <form id="login-form">
+                    <div>
+                        <label for="username">Username</label>
+                        <input type="text" id="username" placeholder="mario.verdi" required autocomplete="username webauthn">
+                    </div>
+                    <div>
+                        <label for="password">Password</label>
+                        <input type="password" id="password" required autocomplete="current-password">
+                    </div>
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" id="ricordami">
+                        <label for="ricordami">Ricordami per 30 giorni</label>
+                    </div>
+                    <div class="error hidden" id="login-error"></div>
+                    <button type="submit" id="login-button" class="button">Accedi</button>
+                    
+                    <button type="button" id="login-bio-button" class="button button-secondary" style="margin-top: 10px; display: none;">
+                        Accedi con Impronta
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div id="employee-view" class="view">
+            <header class="mobile-header">
+                <div class="logo">Timbratura</div>
+                <div class="user-info">
+                    <strong id="employee-name"></strong>
+                    <a href="#" id="logout-button" class="logout">Esci</a>
+                </div>
+            </header>
+            
+            <main class="mobile-main">
+                <div class="card">
+                    <div id="digital-clock">00:00:00</div>
+                    <p id="current-status">Pronto per timbrare.</p>
+                    <button id="timbra-button" class="button" disabled>Caricamento...</button>
+                    <p id="timbra-status"></p>
+                </div>
+                
+                <div class="card" id="bio-card" style="display: none;">
+                    <h2>Accesso Rapido</h2>
+                    <p id="bio-card-status">Abilita l'accesso con impronta/volto per non dover più inserire la password.</p>
+                    <button id="register-bio-button" class="button button-secondary" style="width: auto; margin-top: 10px;">
+                        Abilita Accesso Biometrico
+                    </button>
+                </div>
+
+                <div class="card">
+                    <h2>Timbrature Recenti</h2>
+                    <ul class="log-list" id="employee-log-body">
+                        <li class="no-items">Nessuna timbratura recente.</li>
+                    </ul>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // Costanti globali
+        const API_BASE_URL = 'api/';
+        const TOKEN_SELECTOR_KEY = 'dz_token_selector';
+        const TOKEN_VALIDATOR_KEY = 'dz_token_validator';
+        
+        // Helper biometria (se la libreria si è caricata)
+        const { startRegistration, startAuthentication } = (window.SimpleWebAuthnBrowser || {});
+
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            let currentUser = null;
+            let lastTimbratura = null;
+            let clockInterval = null;
+
+            // Selettori DOM
+            const views = {
+                loading: document.getElementById('loading-view'),
+                login: document.getElementById('login-view'),
+                employee: document.getElementById('employee-view')
+            };
+            const loginForm = document.getElementById('login-form');
+            const loginButton = document.getElementById('login-button');
+            const loginError = document.getElementById('login-error');
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+            const ricordamiInput = document.getElementById('ricordami');
+            const loginBioButton = document.getElementById('login-bio-button');
+            
+            const employeeName = document.getElementById('employee-name');
+            const logoutButton = document.getElementById('logout-button');
+            const currentStatus = document.getElementById('current-status');
+            const timbraButton = document.getElementById('timbra-button');
+            const timbraStatus = document.getElementById('timbra-status');
+            const employeeLogBody = document.getElementById('employee-log-body');
+            const digitalClock = document.getElementById('digital-clock');
+            
+            const bioCard = document.getElementById('bio-card');
+            const bioCardStatus = document.getElementById('bio-card-status');
+            const registerBioButton = document.getElementById('register-bio-button');
+
+            // --- FUNZIONI ---
+
+            function showView(viewName) {
+                Object.values(views).forEach(v => v.classList.remove('active'));
+                if (views[viewName]) { 
+                    views[viewName].classList.add('active'); 
+                }
+
+                // *** INIZIO CORREZIONE ***
+                // Controlla la biometria SOLO quando mostri il login
+                if (viewName === 'login') {
+                    checkBiometriaSupport();
+                }
+                // *** FINE CORREZIONE ***
+            }
+            function showLoginError(message) { loginError.textContent = message; loginError.classList.remove('hidden'); }
+            function clearLoginError() { loginError.textContent = ''; loginError.classList.add('hidden'); }
+
+            async function fetchAPI(endpoint, options = {}) {
+                let response;
+                try {
+                    response = await fetch(API_BASE_URL + endpoint, options);
+                    const rawText = await response.text(); 
+                    if (!response.ok) {
+                        console.error('--- ERRORE RAW DAL SERVER (fetchAPI) ---');
+                        console.error(rawText); // Stampa l'errore HTML/testo
+                        try { 
+                            const errData = JSON.parse(rawText);
+                            throw new Error(errData.message || `Errore ${response.status}`);
+                        } catch (e) {
+                            throw new Error(`Errore ${response.status}. La risposta del server non è JSON.`);
+                        }
+                    }
+                    try {
+                        return JSON.parse(rawText);
+                    } catch (e) {
+                        console.error('--- ERRORE PARSING JSON (Risposta OK ma non JSON) ---');
+                        console.error(rawText);
+                        throw new Error('Il server ha inviato una risposta non valida.');
+                    }
+                } catch (error) { 
+                    console.error('Errore FetchAPI:', error.message); 
+                    throw error; 
+                }
+            }
+
+            function startClock() {
+                if (clockInterval) clearInterval(clockInterval);
+                function updateClock() {
+                    const now = new Date();
+                    const h = String(now.getHours()).padStart(2, '0');
+                    const m = String(now.getMinutes()).padStart(2, '0');
+                    const s = String(now.getSeconds()).padStart(2, '0');
+                    digitalClock.textContent = `${h}:${m}:${s}`;
+                }
+                updateClock();
+                clockInterval = setInterval(updateClock, 1000);
+            }
+
+            function initializeEmployeeView(user) {
+                currentUser = user;
+                employeeName.textContent = user.nome;
+                loadEmployeeData();
+                startClock();
+                showView('employee');
+                if (user.authMethod === 'password') {
+                    bioCard.style.display = 'block';
+                } else {
+                    bioCard.style.display = 'none';
+                }
+            }
+
+            async function checkSession() {
+                // Non controlla più la biometria qui
+                try {
+                    const sessionData = await fetchAPI('check_session.php');
+                    if (sessionData.user.ruolo === 'employee') {
+                        sessionData.user.authMethod = 'session';
+                        initializeEmployeeView(sessionData.user);
+                    } else {
+                        showView('login');
+                    }
+                    return;
+                } catch (sessionError) {
+                    const selettore = localStorage.getItem(TOKEN_SELECTOR_KEY);
+                    const validatore = localStorage.getItem(TOKEN_VALIDATOR_KEY);
+                    if (selettore && validatore) {
+                        try {
+                            const tokenData = await fetchAPI('check_session.php', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ selettore, validatore })
+                            });
+                            if (tokenData.user.ruolo === 'employee') {
+                                tokenData.user.authMethod = 'token';
+                                initializeEmployeeView(tokenData.user);
+                            } else {
+                                clearTokenStorage(); showView('login');
+                            }
+                            return;
+                        } catch (tokenError) {
+                            clearTokenStorage(); showView('login'); return;
+                        }
+                    }
+                    showView('login');
+                }
+            }
+            
+            function saveTokenStorage(token) {
+                if (token && token.selettore && token.validatore) {
+                    localStorage.setItem(TOKEN_SELECTOR_KEY, token.selettore);
+                    localStorage.setItem(TOKEN_VALIDATOR_KEY, token.validatore);
+                }
+            }
+            function clearTokenStorage() {
+                localStorage.removeItem(TOKEN_SELECTOR_KEY);
+                localStorage.removeItem(TOKEN_VALIDATOR_KEY);
+            }
+
+            async function handleLogin(e) {
+                e.preventDefault();
+                clearLoginError();
+                loginButton.disabled = true; loginButton.textContent = 'Accesso...';
+                try {
+                    const data = await fetchAPI('login.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            username: usernameInput.value,
+                            password: passwordInput.value,
+                            ricordami: ricordamiInput.checked
+                        })
+                    });
+                    if (data.user.ruolo !== 'employee') {
+                        showLoginError("Accesso riservato ai dipendenti.");
+                        await fetchAPI('logout.php'); 
+                        return;
+                    }
+                    if (ricordamiInput.checked && data.token) { saveTokenStorage(data.token); }
+                    data.user.authMethod = 'password';
+                    initializeEmployeeView(data.user);
+                } catch (error) {
+                    showLoginError(error.message);
+                } finally {
+                    loginButton.disabled = false; loginButton.textContent = 'Accedi';
+                }
+            }
+            
+            async function handleLogout() {
+                if (clockInterval) clearInterval(clockInterval);
+                try {
+                    const selettore = localStorage.getItem(TOKEN_SELECTOR_KEY);
+                    await fetchAPI('logout.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ selettore })
+                    });
+                } catch (error) { console.error("Errore durante il logout:", error); }
+                clearTokenStorage();
+                currentUser = null; lastTimbratura = null;
+                usernameInput.value = ''; passwordInput.value = '';
+                ricordamiInput.checked = false;
+                showView('login');
+            }
+            
+            async function loadEmployeeData() {
+                try {
+                    const data = await fetchAPI('get_data.php');
+                    lastTimbratura = data.last_timbratura;
+                    updateTimbraButton();
+                    updateRecentLogs(data.recent_logs);
+                } catch (error) {
+                    timbraStatus.textContent = "Errore caricamento dati.";
+                    if (String(error.message).includes("401")) { handleLogout(); }
+                }
+            }
+            
+            function updateTimbraButton() {
+                timbraButton.disabled = false;
+                timbraStatus.textContent = '';
+                if (!lastTimbratura || lastTimbratura.tipo === 'uscita') {
+                    currentStatus.textContent = "Pronto per timbrare l'Entrata.";
+                    timbraButton.textContent = 'TIMBRA ENTRATA';
+                    timbraButton.className = 'button button-success';
+                } else {
+                    const ora = new Date(lastTimbraButton.timestamp).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+                    currentStatus.textContent = `Entrato alle ${ora}.`;
+                    timbraButton.textContent = 'TIMBRA USCITA';
+                    timbraButton.className = 'button button-danger';
+                }
+            }
+            
+            function updateRecentLogs(logs) {
+                employeeLogBody.innerHTML = '';
+                if (!logs || logs.length === 0) {
+                    employeeLogBody.innerHTML = '<li class="no-items">Nessuna timbratura recente.</li>';
+                    return;
+                }
+                logs.forEach(log => {
+                    const li = document.createElement('li');
+                    li.className = 'log-item';
+                    const dataFormat = new Date(log.timestamp).toLocaleString('it-IT');
+                    const tipoText = log.tipo === 'entrata' ? 'Entrata' : 'Uscita';
+                    li.innerHTML = `<span>${dataFormat}</span> <span class="tipo-${log.tipo}">${tipoText}</span>`;
+                    employeeLogBody.appendChild(li);
+                });
+            }
+            
+            async function handleTimbra() {
+                timbraButton.disabled = true;
+                timbraStatus.textContent = 'Richiesta posizione GPS...';
+                try {
+                    const position = await getGeoLocation();
+                    timbraStatus.textContent = 'Posizione trovata. Invio timbratura...';
+                    const { latitude, longitude } = position.coords;
+                    const tipoTimbratura = (!lastTimbratura || lastTimbratura.tipo === 'uscita') ? 'entrata' : 'uscita';
+                    
+                    const data = await fetchAPI('timbra.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ tipo: tipoTimbratura, latitudine: latitude, longitudine: longitude })
+                    });
+                    
+                    timbraStatus.textContent = data.message;
+                    await loadEmployeeData();
+                } catch (error) {
+                    timbraStatus.textContent = `Errore: ${error.message}`;
+                    timbraButton.disabled = false;
+                }
+            }
+            
+            function getGeoLocation() {
+                return new Promise((resolve, reject) => {
+                    if (!navigator.geolocation) { reject(new Error('Geolocalizzazione non supportata.')); return; }
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => resolve(position),
+                        (error) => {
+                            switch(error.code) {
+                                case error.PERMISSION_DENIED: reject(new Error('Permesso posizione negato.')); break;
+                                case error.POSITION_UNAVAILABLE: reject(new Error('Posizione non disponibile.')); break;
+                                case error.TIMEOUT: reject(new Error('Timeout GPS. Riprova.')); break;
+                                default: reject(new Error('Errore GPS sconosciuto.'));
+                            }
+                        },
+                        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                    );
+                });
+            }
+            
+            // --- FUNZIONI BIOMETRIA ---
+
+            function checkBiometriaSupport() {
+                try {
+                    if (startRegistration && SimpleWebAuthnBrowser.browserSupportsWebAuthn()) {
+                        loginBioButton.style.display = 'block';
+                    } else {
+                        loginBioButton.style.display = 'none';
+                    }
+                } catch (e) {
+                    console.error("Errore controllo biometria (libreria non caricata?)", e);
+                    loginBioButton.style.display = 'none';
+                }
+            }
+            
+            async function handleRegisterBio() {
+                registerBioButton.disabled = true;
+                bioCardStatus.textContent = 'Attendi, chiedo al server...';
+                try {
+                    const optionsResponse = await fetchAPI('webauthn_register_start.php', { method: 'POST' });
+                    if (!optionsResponse.success) throw new Error(optionsResponse.message);
+                    bioCardStatus.textContent = 'Tocca il sensore di impronta...';
+                    
+                    const attestation = await startRegistration(optionsResponse.options);
+                    bioCardStatus.textContent = 'Verifico e salvo...';
+
+                    const verificationResponse = await fetchAPI('webauthn_register_finish.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(attestation)
+                    });
+                    if (!verificationResponse.success) throw new Error(verificationResponse.message);
+                    
+                    bioCardStatus.textContent = 'Accesso biometrico abilitato!';
+                    registerBioButton.style.display = 'none';
+
+                } catch (error) {
+                    console.error('Errore Registrazione Bio:', error);
+                    bioCardStatus.textContent = `Errore: ${error.message}`;
+                    registerBioButton.disabled = false;
+                }
+            }
+
+            async function handleLoginBio() {
+                clearLoginError();
+                const username = usernameInput.value;
+                if (!username) {
+                    showLoginError('Inserisci prima il tuo username per il login biometrico.');
+                    return;
+                }
+                
+                loginBioButton.disabled = true;
+                loginBioButton.textContent = 'Controllo...';
+
+                try {
+                    const optionsResponse = await fetchAPI('webauthn_login_start.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username })
+                    });
+                    if (!optionsResponse.success) throw new Error(optionsResponse.message);
+
+                    loginBioButton.textContent = 'Tocca il sensore...';
+                    
+                    const assertion = await startAuthentication(optionsResponse.options);
+                    loginBioButton.textContent = 'Verifico...';
+                    
+                    const verificationResponse = await fetchAPI('webauthn_login_finish.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(assertion)
+                    });
+                    if (!verificationResponse.success) throw new Error(verificationResponse.message);
+                    
+                    verificationResponse.user.authMethod = 'biometric';
+                    initializeEmployeeView(verificationResponse.user);
+
+                } catch (error) {
+                    console.error('Errore Login Bio:', error);
+                    showLoginError(error.message);
+                } finally {
+                    loginBioButton.disabled = false;
+                    loginBioButton.textContent = 'Accedi con Impronta';
+                }
+            }
+
+            // --- EVENT LISTENERS ---
+            loginForm.addEventListener('submit', handleLogin);
+            logoutButton.addEventListener('click', handleLogout);
+            timbraButton.addEventListener('click', handleTimbra);
+            registerBioButton.addEventListener('click', handleRegisterBio);
+            loginBioButton.addEventListener('click', handleLoginBio);
+
+            // --- AVVIO APP ---
+            showView('loading');
+            checkSession();
+        });
+    </script>
+</body>
+</html>

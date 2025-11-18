@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pannello Admin - DzTimbratore</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <div id="loading-view" class="view view-centered active">
+            <div class="spinner"></div>
+        </div>
+        
+        <div id="login-view" class="view view-centered">
+            <div class="card" style="max-width: 450px;">
+                <h2 style="text-align: center; border: none; margin-bottom: 5px;">DzTimbratore</h2>
+                <p style="text-align: center; color: var(--secondary-gray); margin-bottom: 20px;">Pannello Admin</p>
+                <form id="login-form">
+                    <div> <label for="username">Username</label> <input type="text" id="username" placeholder="admin" required> </div>
+                    <div> <label for="password">Password</label> <input type="password" id="password" required> </div>
+                    <div class="checkbox-wrapper"> <input type="checkbox" id="ricordami"> <label for="ricordami">Ricordami</label> </div>
+                    <div class="error hidden" id="login-error"></div>
+                    <button type="submit" id="login-button" class="button">Accedi</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="admin-view" class="view">
+            <header class="admin-header">
+                <div class="logo">Admin DzTimbratore</div>
+                <nav>
+                    <span style="margin-right: 15px;">Benvenuto, <strong id="admin-name"></strong> (<span id="admin-role"></span>)</span>
+                    <a href="#" id="logout-button" class="logout">Esci</a>
+                </nav>
+            </header>
+            
+            <main class="admin-main">
+                <div class="tab-nav">
+                    <a class="tab-link active" data-tab="log">Riepilogo Mensile</a>
+                    <a class="tab-link" data-tab="utenti">Gestione Utenti</a>
+                </div>
+                
+                <div id="tab-log" class="tab-pane view active">
+                    <div class="content-section">
+                        <form id="filter-form">
+                            <div class="filter-bar">
+                                <div>
+                                    <label for="filter-dipendente">Dipendente</label>
+                                    <select id="filter-dipendente" name="dipendente" required></select>
+                                </div>
+                                <div>
+                                    <label for="filter-mese">Mese</label>
+                                    <select id="filter-mese" name="mese" required></select>
+                                </div>
+                                <div>
+                                    <label for="filter-anno">Anno</label>
+                                    <select id="filter-anno" name="anno" required></select>
+                                </div>
+                                <div class="button-wrapper">
+                                    <button type="submit" class="button">Mostra</button>
+                                    <button type="button" id="export-excel-button" class="button button-success">Esporta</button>
+                                </div>
+                            </div>
+                        </form>
+                        <div class="grid-table">
+                            <table>
+                                <thead id="log-table-head"></thead>
+                                <tbody id="log-table-body"></tbody>
+                            </table>
+                        </div>
+                        <div id="log-table-placeholder" class="no-items">
+                            Seleziona un dipendente, un mese e un anno per visualizzare il riepilogo.
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="tab-utenti" class="tab-pane view">
+                    <div class="content-section">
+                        <h2>Crea Nuovo Utente</h2>
+                        <form id="create-user-form">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                                <div> <label for="new_username">Username</label> <input type="text" id="new_username" required> </div>
+                                <div> <label for="new_password">Password</label> <input type="password" id="new_password" required> </div>
+                                <div> <label for="new_nome">Nome</label> <input type="text" id="new_nome" required> </div>
+                                <div> <label for="new_cognome">Cognome</label> <input type="text" id="new_cognome" required> </div>
+                                
+                                <div id="new_ruolo_wrapper">
+                                    <label for="new_ruolo">Ruolo</label>
+                                    <select id="new_ruolo"> 
+                                        <option value="employee">Employee</option> 
+                                        <option value="supervisor">Supervisor</option>
+                                        <option value="admin">Admin</option> 
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="error hidden" id="create-user-error"></div>
+                            <button type="submit" class="button button-success" style="margin-top: 15px; width: auto;">Crea Utente</button>
+                        </form>
+                    </div>
+                    <div class="content-section">
+                        <h2>Elenco Utenti</h2>
+                        <div>
+                            <table>
+                                <thead> 
+                                    <tr> 
+                                        <th>Username</th> 
+                                        <th>Nome</th> 
+                                        <th>Azioni</th> 
+                                    </tr> 
+                                </thead>
+                                <tbody id="admin-users-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <script>
+        // Costanti globali
+        const API_BASE_URL = 'api/';
+        const TOKEN_SELECTOR_KEY = 'dz_admin_token_selector';
+        const TOKEN_VALIDATOR_KEY = 'dz_admin_token_validator';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // Stato
+            let currentUser = null;
+            let listaUtenti = [];
+
+            // Selettori DOM
+            const views = { loading: document.getElementById('loading-view'), login: document.getElementById('login-view'), admin: document.getElementById('admin-view') };
+            const loginForm = document.getElementById('login-form');
+            const loginButton = document.getElementById('login-button');
+            const loginError = document.getElementById('login-error');
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+            const ricordamiInput = document.getElementById('ricordami');
+            const adminName = document.getElementById('admin-name');
+            const adminRole = document.getElementById('admin-role'); // Per mostrare il ruolo
+            const logoutButton = document.getElementById('logout-button');
+            const adminUsersBody = document.getElementById('admin-users-body');
+            const createUserForm = document.getElementById('create-user-form');
+            const createUserError = document.getElementById('create-user-error');
+            const filterForm = document.getElementById('filter-form');
+            const filterDipendente = document.getElementById('filter-dipendente');
+            const filterMese = document.getElementById('filter-mese');
+            const filterAnno = document.getElementById('filter-anno');
+            const exportExcelButton = document.getElementById('export-excel-button');
+            const logTable = document.querySelector('.grid-table table');
+            const logTableHead = document.getElementById('log-table-head');
+            const logTableBody = document.getElementById('log-table-body');
+            const logTablePlaceholder = document.getElementById('log-table-placeholder');
+            const newRuoloWrapper = document.getElementById('new_ruolo_wrapper'); // Wrapper per il dropdown ruolo
+
+            // --- FUNZIONI ---
+
+            function showView(viewName) {
+                Object.values(views).forEach(v => v.classList.remove('active'));
+                if (views[viewName]) { views[viewName].classList.add('active'); }
+            }
+            function showLoginError(message) { loginError.textContent = message; loginError.classList.remove('hidden'); }
+            function clearLoginError() { loginError.textContent = ''; loginError.classList.add('hidden'); }
+            function showCreateError(message) { createUserError.textContent = message; createUserError.classList.remove('hidden'); }
+            function clearCreateError() { createUserError.textContent = ''; createUserError.classList.add('hidden'); }
+            
+            async function fetchAPI(endpoint, options = {}) {
+                try {
+                    const response = await fetch(API_BASE_URL + endpoint, options);
+                    if (!response.ok) { const errData = await response.json(); throw new Error(errData.message || `Errore ${response.status}`); }
+                    return response.json();
+                } catch (error) { console.error('Errore FetchAPI:', error); throw error; }
+            }
+
+            function initializeAdminView(user) {
+                currentUser = user;
+                adminName.textContent = user.nome;
+                adminRole.textContent = user.ruolo; // Mostra il ruolo
+                
+                if (user.ruolo === 'supervisor') {
+                    newRuoloWrapper.style.display = 'none';
+                } else {
+                    newRuoloWrapper.style.display = 'block';
+                }
+                
+                populateFilterDropdowns();
+                loadInitialAdminData();
+                setupTabs();
+                showView('admin');
+            }
+
+            async function checkSession() {
+                try {
+                    const sessionData = await fetchAPI('check_session.php');
+                    if (sessionData.user.ruolo === 'admin' || sessionData.user.ruolo === 'supervisor') { 
+                        initializeAdminView(sessionData.user); 
+                    } else { 
+                        showView('login');
+                    }
+                    return;
+                } catch (sessionError) {
+                    const selettore = localStorage.getItem(TOKEN_SELECTOR_KEY);
+                    const validatore = localStorage.getItem(TOKEN_VALIDATOR_KEY);
+                    if (selettore && validatore) {
+                        try {
+                            const tokenData = await fetchAPI('check_session.php', {
+                                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ selettore, validatore })
+                            });
+                            if (tokenData.user.ruolo === 'admin' || tokenData.user.ruolo === 'supervisor') { 
+                                initializeAdminView(tokenData.user); 
+                            }
+                            else { clearTokenStorage(); showView('login'); }
+                            return;
+                        } catch (tokenError) { clearTokenStorage(); showView('login'); return; }
+                    }
+                    showView('login');
+                }
+            }
+            
+            function saveTokenStorage(token) {
+                if (token && token.selettore && token.validatore) {
+                    localStorage.setItem(TOKEN_SELECTOR_KEY, token.selettore);
+                    localStorage.setItem(TOKEN_VALIDATOR_KEY, token.validatore);
+                }
+            }
+            function clearTokenStorage() {
+                localStorage.removeItem(TOKEN_SELECTOR_KEY);
+                localStorage.removeItem(TOKEN_VALIDATOR_KEY);
+            }
+
+            async function handleLogin(e) {
+                e.preventDefault(); clearLoginError();
+                loginButton.disabled = true; loginButton.textContent = 'Accesso...';
+                try {
+                    const data = await fetchAPI('login.php', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            username: usernameInput.value, password: passwordInput.value,
+                            ricordami: ricordamiInput.checked
+                        })
+                    });
+                    if (data.user.ruolo === 'admin' || data.user.ruolo === 'supervisor') {
+                         if (ricordamiInput.checked && data.token) { saveTokenStorage(data.token); }
+                         initializeAdminView(data.user);
+                    } else {
+                        showLoginError("Accesso non consentito (ruolo non valido).");
+                        await fetchAPI('logout.php'); return;
+                    }
+                } catch (error) { showLoginError(error.message);
+                } finally { loginButton.disabled = false; loginButton.textContent = 'Accedi'; }
+            }
+            
+            async function handleLogout() {
+                try {
+                    const selettore = localStorage.getItem(TOKEN_SELECTOR_KEY);
+                    await fetchAPI('logout.php', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ selettore })
+                    });
+                } catch (error) { console.error("Errore durante il logout:", error); }
+                clearTokenStorage(); currentUser = null;
+                usernameInput.value = ''; passwordInput.value = '';
+                ricordamiInput.checked = false; showView('login');
+            }
+            
+            function populateFilterDropdowns() {
+                const mesi = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
+                filterMese.innerHTML = '<option value="">-- Mese --</option>';
+                mesi.forEach((nome, index) => { filterMese.innerHTML += `<option value="${index + 1}">${nome}</option>`; });
+                const annoCorrente = new Date().getFullYear();
+                filterAnno.innerHTML = '<option value="">-- Anno --</option>';
+                for (let i = 0; i < 3; i++) {
+                    const anno = annoCorrente - i;
+                    filterAnno.innerHTML += `<option value="${anno}">${anno}</option>`;
+                }
+                filterMese.value = new Date().getMonth() + 1;
+                filterAnno.value = annoCorrente;
+            }
+            
+            async function loadInitialAdminData() {
+                adminUsersBody.innerHTML = '<tr><td colspan="3" class="no-items">Caricamento...</td></tr>';
+                try {
+                    const response = await fetchAPI('get_data.php'); 
+                    const data = response.data;
+                    listaUtenti = data.all_users;
+                    populateUserList(data.all_users);
+                    populateUserFilter(data.all_users);
+                } catch (error) {
+                    if (String(error.message).includes("401")) { handleLogout(); }
+                    adminUsersBody.innerHTML = `<tr><td colspan="3" class="error">${error.message}</td></tr>`;
+                }
+            }
+            
+            function populateUserList(users) {
+                adminUsersBody.innerHTML = '';
+                if (!users || users.length === 0) {
+                    adminUsersBody.innerHTML = '<tr><td colspan="3" class="no-items">Nessun utente trovato.</td></tr>';
+                } else {
+                    users.forEach(user => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${user.username}</td>
+                            <td>${user.cognome} ${user.nome}</td>
+                            <td><button class="button button-danger button-sm" data-id="${user.id}" data-username="${user.username}">Elimina</button></td>
+                        `;
+                        adminUsersBody.appendChild(tr);
+                    });
+                }
+            }
+            
+            // *** INIZIO CORREZIONE ***
+            function populateUserFilter(users) {
+                filterDipendente.innerHTML = '<option value="">-- Seleziona dipendente --</option>';
+                
+                // Filtra la lista per mostrare SOLO i dipendenti
+                const employees = users.filter(user => user.ruolo === 'employee');
+
+                if (employees && employees.length > 0) {
+                    employees.forEach(user => {
+                        filterDipendente.innerHTML += `<option value="${user.id}">${user.cognome} ${user.nome}</option>`;
+                    });
+                }
+            }
+            // *** FINE CORREZIONE ***
+            
+            async function handleFilterSubmit(e) {
+                e.preventDefault();
+                logTablePlaceholder.style.display = 'none';
+                logTable.style.display = 'table';
+                logTableHead.innerHTML = '<tr><th>Caricamento...</th></tr>';
+                logTableBody.innerHTML = '';
+                
+                const dip = filterDipendente.value;
+                const mese = filterMese.value;
+                const anno = filterAnno.value;
+                if (!dip || !mese || !anno) {
+                    alert('Seleziona dipendente, mese e anno.');
+                    logTableHead.innerHTML = '';
+                    logTablePlaceholder.style.display = 'block';
+                    return;
+                }
+                const queryString = `?dipendente=${dip}&mese=${mese}&anno=${anno}`;
+
+                try {
+                    const response = await fetchAPI(`get_data.php${queryString}`);
+                    buildGridTable(response.data.grid_data);
+                } catch (error) {
+                    if (String(error.message).includes("401")) { handleLogout(); }
+                    logTableHead.innerHTML = `<tr><th class="error">${error.message}</th></tr>`;
+                }
+            }
+            
+            function buildGridTable(gridData) {
+                if (!gridData) {
+                    logTableHead.innerHTML = '';
+                    logTableBody.innerHTML = '';
+                    logTablePlaceholder.textContent = 'Nessun dato trovato per questa selezione.';
+                    logTablePlaceholder.style.display = 'block';
+                    logTable.style.display = 'none';
+                    return;
+                }
+                
+                const { giorni_nel_mese, max_colonne, timbrature_per_giorno } = gridData;
+                
+                let headerHtml = '<tr><th>Giorno</th>';
+                for (let i = 1; i <= max_colonne; i++) {
+                    headerHtml += `<th>Timbrata ${i}</th>`;
+                }
+                headerHtml += '</tr>';
+                logTableHead.innerHTML = headerHtml;
+                
+                let bodyHtml = '';
+                for (let g = 1; g <= giorni_nel_mese; g++) {
+                    bodyHtml += '<tr>';
+                    bodyHtml += `<td>${g}</td>`;
+                    const timbrateDelGiorno = timbrature_per_giorno[g] || [];
+                    for (let i = 0; i < max_colonne; i++) {
+                        const timbrata = timbrateDelGiorno[i];
+                        if (timbrata) {
+                            const mapsLink = `http://googleusercontent.com/maps/search/?api=1&query=${timbrata.lat},${timbrata.lon}`;
+                            bodyHtml += `
+                                <td>
+                                    <div style="font-weight: 600; font-size: 1.1em;">${timbrata.orario}</div>
+                                    <div style="font-size: 0.9em; color: ${timbrata.tipo === 'entrata' ? 'var(--success-green)' : 'var(--danger-red)'};">
+                                        ${timbrata.tipo === 'entrata' ? 'Entrata' : 'Uscita'}
+                                    </div>
+                                    <div style="font-size: 0.8em; color: var(--secondary-gray);">
+                                        <a href="${mapsLink}" target="_blank" style="color: var(--primary-blue);">Vedi Mappa</a>
+                                    </div>
+                                </td>`;
+                        } else {
+                            bodyHtml += '<td>-</td>';
+                        }
+                    }
+                    bodyHtml += '</tr>';
+                }
+                logTableBody.innerHTML = bodyHtml;
+            }
+
+            function handleExportExcel() {
+                const dip = filterDipendente.value;
+                const mese = filterMese.value;
+                const anno = filterAnno.value;
+                if (!dip || !mese || !anno) {
+                    alert('Seleziona i filtri prima di esportare.');
+                    return;
+                }
+                const queryString = `?dipendente=${dip}&mese=${mese}&anno=${anno}`;
+                window.open(API_BASE_URL + 'genera_excel.php' + queryString, '_blank');
+            }
+            
+            async function handleCreateUser(e) {
+                e.preventDefault(); clearCreateError();
+                
+                const ruoloSelezionato = (currentUser.ruolo === 'supervisor') 
+                    ? 'employee' 
+                    : document.getElementById('new_ruolo').value;
+                
+                try {
+                    await fetchAPI('manage_user.php', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'create',
+                            username: document.getElementById('new_username').value,
+                            password: document.getElementById('new_password').value,
+                            nome: document.getElementById('new_nome').value,
+                            cognome: document.getElementById('new_cognome').value,
+                            ruolo: ruoloSelezionato
+                        })
+                    });
+                    createUserForm.reset();
+                    alert('Utente creato con successo!');
+                    loadInitialAdminData();
+                } catch (error) { showCreateError(error.message); }
+            }
+            
+            async function handleDeleteUser(e) {
+                if (!e.target.classList.contains('button-danger')) return;
+                const id = e.target.dataset.id;
+                const username = e.target.dataset.username;
+                if (!confirm(`Sei sicuro di voler eliminare l'utente "${username}"? (Questa azione è irreversibile)`)) { return; }
+                
+                try {
+                    await fetchAPI('manage_user.php', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'delete', user_id: id })
+                    });
+                    alert('Utente eliminato.');
+                    loadInitialAdminData();
+                } catch (error) { alert(`Errore: ${error.message}`); }
+            }
+            
+            function setupTabs() {
+                const tabLinks = document.querySelectorAll('.tab-link');
+                const tabPanes = document.querySelectorAll('.tab-pane');
+                tabLinks.forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        tabLinks.forEach(l => l.classList.remove('active'));
+                        tabPanes.forEach(p => p.classList.remove('active'));
+                        link.classList.add('active');
+                        const tabId = 'tab-' + link.dataset.tab;
+                        document.getElementById(tabId).classList.add('active');
+                    });
+                });
+            }
+            
+            // --- EVENT LISTENERS ---
+            loginForm.addEventListener('submit', handleLogin);
+            logoutButton.addEventListener('click', handleLogout);
+            filterForm.addEventListener('submit', handleFilterSubmit);
+            exportExcelButton.addEventListener('click', handleExportExcel);
+            createUserForm.addEventListener('submit', handleCreateUser);
+            adminUsersBody.addEventListener('click', handleDeleteUser);
+
+            // --- AVVIO APP ---
+            showView('loading');
+            checkSession();
+        });
+    </script>
+</body>
+</html>
