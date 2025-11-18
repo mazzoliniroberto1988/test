@@ -1,414 +1,132 @@
---- [2025-11-18 08:54:14] ---
+--- [2025-11-18 10:52:15] ---
 Checkpoint: config.php - File caricato.
 
---- [2025-11-18 08:54:14] ---
+--- [2025-11-18 10:52:15] ---
 Checkpoint: config.php - 'vendor/autoload.php' incluso.
 
---- [2025-11-18 08:54:14] ---
-Checkpoint: config.php - Sessione avviata.
+--- [2025-11-18 10:52:15] ---
+Checkpoint: config.php - Sessione avviata (Lax).
 
---- [2025-11-18 08:54:14] ---
+--- [2025-11-18 10:52:15] ---
 Checkpoint: config.php - Funzione connect_db() chiamata.
 
---- [2025-11-18 08:54:14] ---
+--- [2025-11-18 10:52:15] ---
 Checkpoint: config.php - Connessione DB (PDO) riuscita.
 
---- [2025-11-18 08:54:14] ---
+--- [2025-11-18 10:52:15] ---
 Checkpoint: send_json_response() - Invio risposta: {"success":false,"message":"Nessuna sessione attiva."}
 
---- [2025-11-18 08:55:02] ---
+--- [2025-11-18 10:52:21] ---
 Checkpoint: config.php - File caricato.
 
---- [2025-11-18 08:55:02] ---
+--- [2025-11-18 10:52:21] ---
 Checkpoint: config.php - 'vendor/autoload.php' incluso.
 
---- [2025-11-18 08:55:02] ---
-Checkpoint: config.php - Sessione avviata.
+--- [2025-11-18 10:52:21] ---
+Checkpoint: config.php - Sessione avviata (Lax).
 
---- [2025-11-18 08:55:02] ---
-Checkpoint: config.php - Funzione connect_db() chiamata.
-
---- [2025-11-18 08:55:02] ---
-Checkpoint: config.php - Connessione DB (PDO) riuscita.
-
---- [2025-11-18 08:55:02] ---
-Checkpoint: send_json_response() - Invio risposta: {"success":false,"message":"Nessuna sessione attiva."}
-
---- [2025-11-18 08:55:50] ---
-Checkpoint: config.php - File caricato.
-
---- [2025-11-18 08:55:50] ---
-Checkpoint: config.php - 'vendor/autoload.php' incluso.
-
---- [2025-11-18 08:55:50] ---
-Checkpoint: config.php - Sessione avviata.
-
---- [2025-11-18 08:55:50] ---
-Checkpoint: config.php - Funzione connect_db() chiamata.
-
---- [2025-11-18 08:55:50] ---
-Checkpoint: config.php - Connessione DB (PDO) riuscita.
-
---- [2025-11-18 08:55:50] ---
-Checkpoint: send_json_response() - Invio risposta: {"success":false,"message":"Nessuna sessione attiva."}
-
---- [2025-11-18 08:55:57] ---
-Checkpoint: config.php - File caricato.
-
---- [2025-11-18 08:55:57] ---
-Checkpoint: config.php - 'vendor/autoload.php' incluso.
-
---- [2025-11-18 08:55:57] ---
-Checkpoint: config.php - Sessione avviata.
-
---- [2025-11-18 08:55:57] ---
-Checkpoint: config.php - Funzione connect_db() chiamata.
-
---- [2025-11-18 08:55:57] ---
-Checkpoint: config.php - Connessione DB (PDO) riuscita.
-
---- [2025-11-18 08:55:57] ---
-Checkpoint: send_json_response() - Invio risposta: {"success":true,"message":"Login effettuato con successo.","user":{"id":6,"username":"Pippo","nome":"Pippo","cognome":"Giannizzero","ruolo":"employee"},"token":null}
-
---- [2025-11-18 08:55:57] ---
-Checkpoint: config.php - File caricato.
-
---- [2025-11-18 08:55:57] ---
-Checkpoint: config.php - 'vendor/autoload.php' incluso.
-
---- [2025-11-18 08:55:57] ---
-Checkpoint: config.php - Sessione avviata.
-
---- [2025-11-18 08:55:57] ---
-Checkpoint: config.php - Funzione connect_db() chiamata.
-
---- [2025-11-18 08:55:57] ---
-Checkpoint: config.php - Connessione DB (PDO) riuscita.
-
---- [2025-11-18 08:55:57] ---
-Checkpoint: send_json_response() - Invio risposta: {"success":true,"last_timbratura":null,"recent_logs":[{"tipo":"uscita","timestamp":"2025-11-17 15:10:51"},{"tipo":"entrata","timestamp":"2025-11-17 15:10:39"}]}
-
---- [2025-11-18 08:55:58] ---
-Checkpoint: config.php - File caricato.
-
---- [2025-11-18 08:55:58] ---
-Checkpoint: config.php - 'vendor/autoload.php' incluso.
-
---- [2025-11-18 08:55:58] ---
-Checkpoint: config.php - Sessione avviata.
-
---- [2025-11-18 08:55:58] ---
+--- [2025-11-18 10:52:21] ---
 Checkpoint: webauthn_server.php - File caricato (config.php già incluso).
 
---- [2025-11-18 08:55:58] ---
+--- [2025-11-18 10:52:21] ---
 Checkpoint: webauthn_server.php - Tutte le classi 'use' sono state dichiarate.
 
---- [2025-11-18 08:55:58] ---
+--- [2025-11-18 10:52:21] ---
 Checkpoint: webauthn_server.php - Classe DbCredentialRepository (RISCRITTA) definita.
 
---- [2025-11-18 08:55:58] ---
+--- [2025-11-18 10:52:21] ---
 Checkpoint: config.php - Funzione connect_db() chiamata.
 
---- [2025-11-18 08:55:58] ---
+--- [2025-11-18 10:52:21] ---
 Checkpoint: config.php - Connessione DB (PDO) riuscita.
 
---- [2025-11-18 08:55:58] ---
+--- [2025-11-18 10:52:21] ---
 Checkpoint: webauthn_server.php - Variabile $pdo inizializzata.
 
---- [2025-11-18 08:55:58] ---
+--- [2025-11-18 10:52:21] ---
 Checkpoint: webauthn_server.php - DbCredentialRepository creato.
 
---- [2025-11-18 08:55:58] ---
+--- [2025-11-18 10:52:21] ---
 Checkpoint: webauthn_server.php - SupportManager creato.
 
---- [2025-11-18 08:55:58] ---
+--- [2025-11-18 10:52:21] ---
 Checkpoint: webauthn_server.php - Richiesta PSR7 creata.
 
---- [2025-11-18 08:55:58] ---
+--- [2025-11-18 10:52:21] ---
 Checkpoint: webauthn_server.php - Loader creati.
 
---- [2025-11-18 08:55:58] ---
+--- [2025-11-18 10:52:21] ---
 Checkpoint: webauthn_server.php - ExtensionOutputCheckerHandler creato.
 
---- [2025-11-18 08:55:58] ---
+--- [2025-11-18 10:52:21] ---
 Checkpoint: webauthn_server.php - Validatore di Attestazione creato (Firma Corretta a 7 argomenti).
 
---- [2025-11-18 08:55:58] ---
+--- [2025-11-18 10:52:21] ---
 Checkpoint: webauthn_server.php - Validatore di Asserzione (Login) creato.
 
---- [2025-11-18 08:55:58] ---
+--- [2025-11-18 10:52:21] ---
 Checkpoint: webauthn_server.php - Fine del file, servizi essenziali inizializzati.
 
---- [2025-11-18 08:55:58] ---
-Checkpoint: register_start.php - (1/13) File caricato E webauthn_server.php INCLUSO.
+--- [2025-11-18 10:52:21] ---
+Checkpoint: login_start.php - File caricato (server.php già incluso).
 
---- [2025-11-18 08:55:58] ---
-Checkpoint: register_start.php - (2/13) Sessione valida. User ID: 6, Username: Pippo
+--- [2025-11-18 10:52:21] ---
+Checkpoint: login_start.php - Input ricevuto: {"username":"Pippo"}
 
---- [2025-11-18 08:55:58] ---
-Checkpoint: register_start.php - (3/13) Entrato nel blocco try.
+--- [2025-11-18 10:52:21] ---
+Checkpoint: login_start.php - Username valido: Pippo
 
---- [2025-11-18 08:55:58] ---
-Checkpoint: register_start.php - (4/13) UserEntity creata.
+--- [2025-11-18 10:52:21] ---
+Checkpoint: login_start.php - Entrato nel blocco try.
 
---- [2025-11-18 08:55:58] ---
+--- [2025-11-18 10:52:21] ---
+Checkpoint: login_start.php - Utente trovato: {"id":6,"nome":"Pippo","cognome":"Giannizzero","ruolo":"employee","username":"Pippo"}
+
+--- [2025-11-18 10:52:21] ---
 Checkpoint: findAllForUserEntity - Ricerca per UserID: 6
 
---- [2025-11-18 08:55:58] ---
-Checkpoint: findAllForUserEntity - Fine ciclo. Credenziali trovate: 0
+--- [2025-11-18 10:52:21] ---
+Checkpoint: findAllForUserEntity - Trovato record, chiamo createSourceFromData.
 
---- [2025-11-18 08:55:58] ---
-Checkpoint: register_start.php - (5/13) Cercate credenziali (Trovate: 0)
+--- [2025-11-18 10:52:21] ---
+Checkpoint: createSourceFromData - Inizio.
 
---- [2025-11-18 08:55:58] ---
-Checkpoint: register_start.php - (6/13) 'excludeCredentials' create (count: 0).
+--- [2025-11-18 10:52:21] ---
+Checkpoint: createSourceFromData (DEBUG-UUID) - Estraggo aaguid come stringa.
 
---- [2025-11-18 08:55:58] ---
-Checkpoint: register_start.php - (7/13) Challenge generata.
+--- [2025-11-18 10:52:21] ---
+Checkpoint: createSourceFromData (DEBUG-UUID) - AAGUID (stringa): ea9b8d66-4d01-1d21-3ce4-b6b48cb575d4
 
---- [2025-11-18 08:55:58] ---
-Checkpoint: register_start.php - (8/13) publicKeyCredentialParametersList creata.
+--- [2025-11-18 10:52:21] ---
+Checkpoint: createSourceFromData (DEBUG-UUID) - Sto per creare Uuid::fromString()
 
---- [2025-11-18 08:55:58] ---
-Checkpoint: register_start.php - (9/13) Oggetto AuthenticatorSelectionCriteria creato.
+--- [2025-11-18 10:52:21] ---
+Checkpoint: createSourceFromData (DEBUG-UUID) - Oggetto Uuid creato.
 
---- [2025-11-18 08:55:58] ---
-Checkpoint: register_start.php - (10/13) Sto per creare PublicKeyCredentialCreationOptions...
+--- [2025-11-18 10:52:21] ---
+Checkpoint: createSourceFromData (DEBUG-BASE64) - Decodifico 'credential_id_hash' da Base64.
 
---- [2025-11-18 08:55:58] ---
-Checkpoint: register_start.php - (11/13) PublicKeyCredentialCreationOptions create (Costruttore 8 argomenti).
+--- [2025-11-18 10:52:21] ---
+Checkpoint: createSourceFromData (DEBUG-FIX5) - Chiamata a ::create() con ordine definitivo.
 
---- [2025-11-18 08:55:58] ---
-Checkpoint: register_start.php - (12/13) Opzioni di creazione salvate in sessione.
+--- [2025-11-18 10:52:21] ---
+Checkpoint: findAllForUserEntity - Fine ciclo. Credenziali trovate: 1
 
---- [2025-11-18 08:55:58] ---
-Checkpoint: send_json_response() - Invio risposta: {"success":true,"options":{"rp":{"name":"DzTimbratore","id":"badge.dizetaimpianti.com"},"user":{"name":"Pippo","id":"Ng","displayName":"Pippo"},"challenge":"_NOESPUHRFNIeSTuud3rV--NcPIW1P8BvLWC1MB-2pU","pubKeyCredParams":[{"type":"public-key","alg":-7}],"timeout":30000,"authenticatorSelection":{"requireResidentKey":true,"userVerification":"required","residentKey":"required","authenticatorAttachment":"platform"},"attestation":"none"}}
+--- [2025-11-18 10:52:21] ---
+Checkpoint: login_start.php - Cercate credenziali (Trovate: 1)
 
---- [2025-11-18 08:56:00] ---
-Checkpoint: config.php - File caricato.
+--- [2025-11-18 10:52:21] ---
+Checkpoint: login_start.php - Challenge generata.
 
---- [2025-11-18 08:56:00] ---
-Checkpoint: config.php - 'vendor/autoload.php' incluso.
+--- [2025-11-18 10:52:21] ---
+Checkpoint: login_start.php - Oggetto PHP requestOptions creato (non stampabile).
 
---- [2025-11-18 08:56:00] ---
-Checkpoint: config.php - Sessione avviata.
+--- [2025-11-18 10:52:21] ---
+Checkpoint: login_start.php - Dati (OGGETTO PHP) salvati in SESSIONE.
 
---- [2025-11-18 08:56:00] ---
-Checkpoint: webauthn_server.php - File caricato (config.php già incluso).
+--- [2025-11-18 10:52:21] ---
+Checkpoint: login_start.php - session_write_close() ESEGUITO.
 
---- [2025-11-18 08:56:00] ---
-Checkpoint: webauthn_server.php - Tutte le classi 'use' sono state dichiarate.
-
---- [2025-11-18 08:56:00] ---
-Checkpoint: webauthn_server.php - Classe DbCredentialRepository (RISCRITTA) definita.
-
---- [2025-11-18 08:56:00] ---
-Checkpoint: config.php - Funzione connect_db() chiamata.
-
---- [2025-11-18 08:56:00] ---
-Checkpoint: config.php - Connessione DB (PDO) riuscita.
-
---- [2025-11-18 08:56:00] ---
-Checkpoint: webauthn_server.php - Variabile $pdo inizializzata.
-
---- [2025-11-18 08:56:00] ---
-Checkpoint: webauthn_server.php - DbCredentialRepository creato.
-
---- [2025-11-18 08:56:00] ---
-Checkpoint: webauthn_server.php - SupportManager creato.
-
---- [2025-11-18 08:56:00] ---
-Checkpoint: webauthn_server.php - Richiesta PSR7 creata.
-
---- [2025-11-18 08:56:00] ---
-Checkpoint: webauthn_server.php - Loader creati.
-
---- [2025-11-18 08:56:00] ---
-Checkpoint: webauthn_server.php - ExtensionOutputCheckerHandler creato.
-
---- [2025-11-18 08:56:00] ---
-Checkpoint: webauthn_server.php - Validatore di Attestazione creato (Firma Corretta a 7 argomenti).
-
---- [2025-11-18 08:56:00] ---
-Checkpoint: webauthn_server.php - Validatore di Asserzione (Login) creato.
-
---- [2025-11-18 08:56:00] ---
-Checkpoint: webauthn_server.php - Fine del file, servizi essenziali inizializzati.
-
---- [2025-11-18 08:56:00] ---
-Checkpoint: register_finish.php - (1/12) File caricato E webauthn_server.php INCLUSO.
-
---- [2025-11-18 08:56:00] ---
-Checkpoint: register_finish.php - (2/12) Sessione valida.
-
---- [2025-11-18 08:56:00] ---
-Checkpoint: register_finish.php - (3/12) Opzioni di creazione caricate e rimosse dalla sessione.
-
---- [2025-11-18 08:56:00] ---
-Checkpoint: register_finish.php - (4/12) Entrato nel blocco try.
-
---- [2025-11-18 08:56:00] ---
-Checkpoint: register_finish.php - (5/12) Dati caricati da php://input (publicKeyCredentialLoader->load).
-
---- [2025-11-18 08:56:00] ---
-Checkpoint: register_finish.php - (6/12) getResponse() chiamato.
-
---- [2025-11-18 08:56:00] ---
-Checkpoint: register_finish.php - (7/12) Risposta valida (Attestation).
-
---- [2025-11-18 08:56:00] ---
-Checkpoint: register_finish.php - (8/12) Sto per chiamare attestationResponseValidator->check()...
-
---- [2025-11-18 08:56:00] ---
-Checkpoint: register_finish.php - (9/12) Validatore 'check' superato.
-
---- [2025-11-18 08:56:00] ---
-DEBUG: L'oggetto $credentialSource è di classe: Webauthn\PublicKeyCredentialSource
-
---- [2025-11-18 08:56:00] ---
-DEBUG: Metodi disponibili sull'oggetto: __construct, create, getPublicKeyCredentialId, getPublicKeyCredentialDescriptor, getAttestationType, getTrustPath, getAttestedCredentialData, getType, getTransports, getAaguid, getCredentialPublicKey, getUserHandle, getCounter, setCounter, getOtherUI, setOtherUI, createFromArray, jsonSerialize
-
---- [2025-11-18 08:56:00] ---
-Checkpoint: register_finish.php - (10/12) Sto per chiamare credentialRepository->saveCredentialSource()...
-
---- [2025-11-18 08:56:00] ---
-Checkpoint: DbCredentialRepository - saveCredentialSource chiamato.
-
---- [2025-11-18 08:56:00] ---
-Checkpoint: DbCredentialRepository (DEBUG-BASE64) - Codifico 'raw_id' binario in Base64.
-
---- [2025-11-18 08:56:00] ---
-Checkpoint: DbCredentialRepository (DEBUG-BASE64) - ID codificato: SxJoe5nkXX9UBD3cw9pNxQ==
-
---- [2025-11-18 08:56:00] ---
-Checkpoint: DbCredentialRepository (DEBUG-AAGUID) - Sto per chiamare ->getAttestedCredentialData()->getAaguid()
-
---- [2025-11-18 08:56:00] ---
-Checkpoint: DbCredentialRepository (DEBUG-AAGUID) - AAGUID (stringa) ottenuta: ea9b8d66-4d01-1d21-3ce4-b6b48cb575d4
-
---- [2025-11-18 08:56:00] ---
-Checkpoint: DbCredentialRepository - Dati pronti per INSERT (UserID: 6, AAGUID: ea9b8d66-4d01-1d21-3ce4-b6b48cb575d4, ID_HASH_BASE64: SxJoe5nkXX9UBD3cw9pNxQ==).
-
---- [2025-11-18 08:56:00] ---
-Checkpoint: DbCredentialRepository - INSERT eseguito.
-
---- [2025-11-18 08:56:00] ---
-Checkpoint: register_finish.php - (11/12) Credenziale salvata nel repository.
-
---- [2025-11-18 08:56:00] ---
-Checkpoint: send_json_response() - Invio risposta: {"success":true,"message":"Registrazione biometrica completata!"}
-
---- [2025-11-18 08:56:02] ---
-Checkpoint: config.php - File caricato.
-
---- [2025-11-18 08:56:02] ---
-Checkpoint: config.php - 'vendor/autoload.php' incluso.
-
---- [2025-11-18 08:56:02] ---
-Checkpoint: config.php - Sessione avviata.
-
---- [2025-11-18 08:56:48] ---
-Checkpoint: config.php - File caricato.
-
---- [2025-11-18 08:56:48] ---
-Checkpoint: config.php - 'vendor/autoload.php' incluso.
-
---- [2025-11-18 08:56:48] ---
-Checkpoint: config.php - Sessione avviata.
-
---- [2025-11-18 08:56:48] ---
-Checkpoint: config.php - Funzione connect_db() chiamata.
-
---- [2025-11-18 08:56:48] ---
-Checkpoint: config.php - Connessione DB (PDO) riuscita.
-
---- [2025-11-18 08:56:48] ---
-Checkpoint: send_json_response() - Invio risposta: {"success":true,"message":"Login effettuato con successo.","user":{"id":6,"username":"Pippo","nome":"Pippo","cognome":"Giannizzero","ruolo":"employee"},"token":{"selettore":"2e1a54238647880081fac54edf832382","validatore":"9d8fb18b3c99ec0d3c54120538d764468a9164cd9fe6f944bdeff8a2d14f3352"}}
-
---- [2025-11-18 08:56:48] ---
-Checkpoint: config.php - File caricato.
-
---- [2025-11-18 08:56:48] ---
-Checkpoint: config.php - 'vendor/autoload.php' incluso.
-
---- [2025-11-18 08:56:48] ---
-Checkpoint: config.php - Sessione avviata.
-
---- [2025-11-18 08:56:48] ---
-Checkpoint: config.php - Funzione connect_db() chiamata.
-
---- [2025-11-18 08:56:48] ---
-Checkpoint: config.php - Connessione DB (PDO) riuscita.
-
---- [2025-11-18 08:56:48] ---
-Checkpoint: send_json_response() - Invio risposta: {"success":true,"last_timbratura":null,"recent_logs":[{"tipo":"uscita","timestamp":"2025-11-17 15:10:51"},{"tipo":"entrata","timestamp":"2025-11-17 15:10:39"}]}
-
---- [2025-11-18 08:56:52] ---
-Checkpoint: config.php - File caricato.
-
---- [2025-11-18 08:56:52] ---
-Checkpoint: config.php - 'vendor/autoload.php' incluso.
-
---- [2025-11-18 08:56:52] ---
-Checkpoint: config.php - Sessione avviata.
-
---- [2025-11-18 08:56:52] ---
-Checkpoint: config.php - Funzione connect_db() chiamata.
-
---- [2025-11-18 08:56:52] ---
-Checkpoint: config.php - Connessione DB (PDO) riuscita.
-
---- [2025-11-18 08:57:03] ---
-Checkpoint: config.php - File caricato.
-
---- [2025-11-18 08:57:03] ---
-Checkpoint: config.php - 'vendor/autoload.php' incluso.
-
---- [2025-11-18 08:57:03] ---
-Checkpoint: config.php - Sessione avviata.
-
---- [2025-11-18 08:57:03] ---
-Checkpoint: config.php - Funzione connect_db() chiamata.
-
---- [2025-11-18 08:57:03] ---
-Checkpoint: config.php - Connessione DB (PDO) riuscita.
-
---- [2025-11-18 08:57:03] ---
-Checkpoint: send_json_response() - Invio risposta: {"success":true,"message":"Login effettuato con successo.","user":{"id":6,"username":"Pippo","nome":"Pippo","cognome":"Giannizzero","ruolo":"employee"},"token":null}
-
---- [2025-11-18 08:57:03] ---
-Checkpoint: config.php - File caricato.
-
---- [2025-11-18 08:57:03] ---
-Checkpoint: config.php - 'vendor/autoload.php' incluso.
-
---- [2025-11-18 08:57:03] ---
-Checkpoint: config.php - Sessione avviata.
-
---- [2025-11-18 08:57:03] ---
-Checkpoint: config.php - Funzione connect_db() chiamata.
-
---- [2025-11-18 08:57:03] ---
-Checkpoint: config.php - Connessione DB (PDO) riuscita.
-
---- [2025-11-18 08:57:03] ---
-Checkpoint: send_json_response() - Invio risposta: {"success":true,"last_timbratura":null,"recent_logs":[{"tipo":"uscita","timestamp":"2025-11-17 15:10:51"},{"tipo":"entrata","timestamp":"2025-11-17 15:10:39"}]}
-
---- [2025-11-18 08:57:48] ---
-Checkpoint: config.php - File caricato.
-
---- [2025-11-18 08:57:48] ---
-Checkpoint: config.php - 'vendor/autoload.php' incluso.
-
---- [2025-11-18 08:57:48] ---
-Checkpoint: config.php - Sessione avviata.
-
---- [2025-11-18 08:57:48] ---
-Checkpoint: config.php - Funzione connect_db() chiamata.
-
---- [2025-11-18 08:57:48] ---
-Checkpoint: config.php - Connessione DB (PDO) riuscita.
-
---- [2025-11-18 08:57:48] ---
-Checkpoint: send_json_response() - Invio risposta: {"success":false,"message":"Nessuna sessione attiva."}
+--- [2025-11-18 10:52:21] ---
+Checkpoint: send_json_response() - Invio risposta: {"success":true,"options":{"challenge":"gcdgxheqWJOulO-0pyj6imRvoRIxQFoGb_wlXPDJTWk=","timeout":30000,"rpId":"badge.dizetaimpianti.com","userVerification":"required","allowCredentials":[{"type":"public-key","id":"pQECAyYgASFYICcYA-t-CUpfqE_2rDC3APoX7b5pAD2_rk_fX6SL6y6dIlggwvI-u-tncbjbmQF7OF86EgmdCXgDWgxBCgUbQO1zUEM=","transports":["hybrid","internal"]}]}}
 

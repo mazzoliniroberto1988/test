@@ -1,25 +1,57 @@
 <?php
 /*
  * FASE 2 LOGIN: (Logica per 'webauthn-lib:^4.9')
- * MODIFICATO: Aggiunti 'use' statement mancanti
- * MODIFICATO: Aggiunti log di debug
+ *
+ * MODIFICA (10:20):
+ * L'errore 'Invalid user handle' è confermato.
+ * I log di debug precedenti fallivano perché tentavano di
+ * stampare dati binari.
+ *
+ * SOLUZIONE: Si usa bin2hex() per stampare in modo sicuro
+ * gli user handle prima del confronto.
  */
 
-// *** INIZIO BLOCCO 'USE' ***
+// --- LOGGER DI EMERGENZA ---
+$log_file_emergency = __DIR__ . '/debug_log.txt';
+$timestamp_emergency = date('Y-m-d H:i:s');
+$log_entry_emergency = "--- [$timestamp_emergency] ---\nCheckpoint: login_finish.php - ESECUZIONE AVVIATA (File chiamato).\n\n";
+file_put_contents($log_file_emergency, $log_entry_emergency, FILE_APPEND | LOCK_EX);
+// --- FINE BLOCCO DI DEBUG --- 
+
+
+// *** INIZIO BLOCCO 'USE' (COMPLETO) ***
 use Webauthn\Exception\InvalidDataException;
 use Webauthn\Exception\AuthenticationException;
+use Webauthn\Exception\InvalidUserHandleException;
 use Webauthn\AuthenticatorAssertionResponse;
 // *** FINE BLOCCO 'USE' ***
 
-require_once __DIR__ . '/webauthn_server.php';
+try {
+    require_once __DIR__ . '/webauthn_server.php';
+    debug_log("Checkpoint: login_finish.php - webauthn_server.php CARICATO CORRETTAMENTE.");
+} catch (Throwable $e) {
+    $log_entry_fatal = "--- [$timestamp_emergency] ---\nERRORE FATALE (login_finish.php) durante require_once: " . $e->getMessage() . "\nFile: " . $e->getFile() . "\nRiga: " . $e->getLine() . "\n\n";
+    file_put_contents($log_file_emergency, $log_entry_fatal, FILE_APPEND | LOCK_EX);
+    
+    header('Content-Type: application/json; charset=utf-8');
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Errore fatale durante il caricamento di webauthn_server.php: ' . $e->getMessage()]);
+    exit;
+}
 
 debug_log("Checkpoint: login_finish.php - File caricato (server.php già incluso).");
 
-if (empty($_SESSION['webauthn_request_options']) || empty($_SESSION['webauthn_user_data'])) {
-    debug_log("ERRORE: login_finish.php - Sessione non valida o scaduta.");
-    send_json_response(['success' => false, 'message' => 'Sessione non valida o scaduta.'], 401);
+// Loggiamo in modo più verboso lo stato della sessione
+if (empty($_SESSION['webauthn_request_options'])) {
+     debug_log("ERRORE: login_finish.php - Sessione non valida: 'webauthn_request_options' è VUOTO.");
+     send_json_response(['success' => false, 'message' => 'Sessione non valida o scaduta (codice: 1).'], 401);
 }
-debug_log("Checkpoint: login_finish.php - Sessione valida.");
+if (empty($_SESSION['webauthn_user_data'])) {
+     debug_log("ERRORE: login_finish.php - Sessione non valida: 'webauthn_user_data' è VUOTO.");
+     send_json_response(['success' => false, 'message' => 'Sessione non valida o scaduta (codice: 2).'], 401);
+}
+
+debug_log("Checkpoint: login_finish.php - Sessione valida. Dati presenti.");
 
 $requestOptions = $_SESSION['webauthn_request_options'];
 $user = $_SESSION['webauthn_user_data'];
@@ -40,49 +72,12 @@ try {
     }
     debug_log("Checkpoint: login_finish.php - Risposta valida (Assertion).");
 
-    $credentialSource = $assertionResponseValidator->check(
-        $publicKeyCredential->getRawId(),
-        $assertionResponse,
-        $requestOptions,
-        $request,
-        (string) $user['id']
-    );
-    debug_log("Checkpoint: login_finish.php - Validatore 'check' superato.");
+    // --- BLOCCO DI DEBUG SICURO (CON BIN2HEX) ---
+    $userIdFromSession = (string) $user['id'];
+    $userHandleFromAuth_raw = $assertionResponse->getUserHandle(); // Questo è binario o null
 
-    $credentialRepository->updateCounter(
-        $credentialSource->getPublicKeyCredentialId(),
-        $credentialSource->getCounter()
-    );
-    debug_log("Checkpoint: login_finish.php - Contatore credenziale aggiornato.");
-
-    // Crea la sessione di login
-    $_SESSION['user_id'] = $user['id'];
-    $_SESSION['user_ruolo'] = $user['ruolo'];
-    $_SESSION['user_nome'] = $user['nome'];
-    session_regenerate_id(true);
-    debug_log("Checkpoint: login_finish.php - Sessione PHP creata. Login completato.");
+    debug_log("--- CHECKPOINT DI CONFRONTO USER HANDLE (Safe Log) ---");
+    debug_log("ID UTENTE (da SESSIONE / stringa): '" . $userIdFromSession . "'");
     
-    send_json_response([
-        'success' => true,
-        'message' => 'Login biometrico effettuato.',
-        'user' => [
-            'id' => $user['id'],
-            'username' => $user['username'],
-            'nome' => $user['nome'],
-            'cognome' => $user['cognome'],
-            'ruolo' => $user['ruolo']
-        ]
-    ]);
-
-} catch (AuthenticationException $e) {
-    debug_log("ERRORE (AuthenticationException): " . $e->getMessage());
-    send_json_response(['success' => false, 'message' => 'Login biometrico fallito: ' . $e->getMessage()], 401);
-} catch (InvalidDataException $e) {
-    debug_log("ERRORE (InvalidDataException): " . $e->getMessage());
-    send_json_response(['success' => false, 'message' => 'Dati non validi: ' . $e->getMessage()], 400);
-} catch (Throwable $e) {
-    debug_log("ERRORE FATALE (login_finish.php): " . $e->getMessage());
-    error_log('WebAuthn Login Finish Error: ' . $e->getMessage());
-    send_json_response(['success' => false, 'message' => 'Login biometrico fallito: ' . $e->getMessage()], 500);
-}
-?>
+    if ($userHandleFromAuth_raw === null) {
+        debug_log("ID UT

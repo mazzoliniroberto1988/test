@@ -54,11 +54,29 @@ function connect_db() {
 }
 
 /* Funzione Helper per risposte JSON */
+/* Funzione Helper per risposte JSON (MODIFICATA CON CONTROLLO ERRORI) */
 function send_json_response($data, $http_code = 200) {
-    debug_log("Checkpoint: send_json_response() - Invio risposta: " . json_encode($data));
-    header('Content-Type: application/json; charset=utf-8');
-    http_response_code($http_code);
-    echo json_encode($data);
+    
+    // --- BLOCCO DI CONTROLLO JSON ---
+$json_output = json_encode($data, JSON_INVALID_UTF8_IGNORE); // <-- QUESTA È LA CORREZIONE    
+    if ($json_output === false) {
+        // Se json_encode fallisce, logga il motivo
+        $json_error = json_last_error_msg();
+        debug_log("ERRORE FATALE (send_json_response): Impossibile codificare JSON. Errore: " . $json_error);
+        
+        // Invia una risposta di errore JSON valida
+        http_response_code(500);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['success' => false, 'message' => 'Errore server: JSON encoding fallito.', 'json_error' => $json_error]);
+    } else {
+        // Se è ok, invia la risposta
+        debug_log("Checkpoint: send_json_response() - Invio risposta: " . $json_output);
+        header('Content-Type: application/json; charset=utf-8');
+        http_response_code($http_code);
+        echo $json_output;
+    }
+    // --- FINE BLOCCO DI CONTROLLO ---
+    
     exit;
 }
 
@@ -77,9 +95,9 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start([
         'cookie_httponly' => true,
         'cookie_secure' => true,
-        'cookie_samesite' => 'Strict'
+        'cookie_samesite' => 'Lax'     // <-- CORRETTO
     ]);
-    debug_log("Checkpoint: config.php - Sessione avviata.");
+    debug_log("Checkpoint: config.php - Sessione avviata (Lax).");
 } else {
     debug_log("Checkpoint: config.php - Sessione già attiva.");
 }

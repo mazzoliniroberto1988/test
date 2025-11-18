@@ -2,12 +2,10 @@
 /*
  * FASE 1 LOGIN: (Logica per 'webauthn-lib:^4.9')
  *
- * MODIFICATO: Correzione Definitiva (basata su documentazione v4.9).
- * La classe PublicKeyCredentialRequestOptions NON usa metodi setter
- * (set...) o builder (with...) a catena.
- *
- * Tutte le opzioni (challenge, allowedCredentials, timeout, rpId)
- * devono essere passate come argomenti al metodo statico ::create().
+ * MODIFICA DEFINITIVA (10:04):
+ * L'encoding Base64URL viene ora fatto con la funzione
+ * nativa PHP (base64_encode + strtr) per evitare
+ * errori di encoding UTF-8 in json_encode.
  */
 
 // Pulisci il file di log per questa esecuzione
@@ -18,11 +16,18 @@ use Webauthn\PublicKeyCredentialRequestOptions;
 use Webauthn\PublicKeyCredentialUserEntity;
 use Webauthn\PublicKeyCredentialDescriptor;
 use Webauthn\PublicKeyCredentialSource;
+// (Rimosso 'use ParagonIE...')
 // *** FINE BLOCCO 'USE' ***
 
 require_once __DIR__ . '/webauthn_server.php'; 
 
 debug_log("Checkpoint: login_start.php - File caricato (server.php già incluso).");
+
+// --- FUNZIONE HELPER PER BASE64URL (NATIVA) ---
+function base64url_encode(string $data): string {
+    return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
+}
+// --- FINE FUNZIONE HELPER ---
 
 $input = json_decode(file_get_contents('php://input'), true);
 $username = $input['username'] ?? null;
@@ -40,13 +45,8 @@ try {
     debug_log("Checkpoint: login_start.php - Entrato nel blocco try.");
     
     $stmt = $pdo->prepare('SELECT id, nome, cognome, ruolo, username FROM utenti WHERE username = ?');
-    debug_log("Checkpoint: login_start.php - Query 'utenti' preparata.");
-    
     $stmt->execute([$username]);
-    debug_log("Checkpoint: login_start.php - Query 'utenti' eseguita.");
-    
     $user = $stmt->fetch();
-    debug_log("Checkpoint: login_start.php - Dati utente fetch().");
 
     if (!$user) {
         debug_log("ERRORE: login_start.php - Utente '$username' non trovato nel DB.");
@@ -58,7 +58,6 @@ try {
     $userEntity = new PublicKeyCredentialUserEntity(
         $user['nome'], (string) $user['id'], $user['nome']
     );
-    debug_log("Checkpoint: login_start.php - PublicKeyCredentialUserEntity creata.");
 
     $credentialSources = $credentialRepository->findAllForUserEntity($userEntity);
     debug_log("Checkpoint: login_start.php - Cercate credenziali (Trovate: " . count($credentialSources) . ")");
@@ -69,7 +68,7 @@ try {
     
     if (empty($allowedCredentials)) {
         debug_log("ERRORE: login_start.php - Nessuna credenziale 'allowedCredentials' trovata per l'utente.");
-        send_json_response(['success'falsesage' => 'Nessuna biometria registrata per questo utente.'], 404);
+        send_json_response(['success' => false, 'message' => 'Nessuna biometria registrata per questo utente.'], 404);
     }
     debug_log("Checkpoint: login_start.php - 'allowedCredentials' create (count: " . count($allowedCredentials) . ").");
 
@@ -77,24 +76,49 @@ try {
     $challenge = random_bytes(32);
     debug_log("Checkpoint: login_start.php - Challenge generata.");
     
-    // --- INIZIO CORREZIONE: Tutti i parametri vanno in ::create() ---
-    // La v4.9 non usa metodi "setter" (set...) o "builder" (with...)
-    // per questa classe. Tutto viene passato al costruttore statico.
+    // Creiamo l'oggetto $requestOptions della libreria PHP (serve per la sessione)
     $requestOptions = PublicKeyCredentialRequestOptions::create(
-        $challenge,                            // Arg 1: $challenge
-        $allowedCredentials,                   // Arg 2: $allowCredentials
-        30000,                                 // Arg 3: $timeout
-        $rpEntity->getId(),                    // Arg 4: $rpId
-        'required'                             // Arg 5: $userVerification
+        $challenge,                            // Arg 1: $challenge (binario)
+        $rpEntity->getId(),                    // Arg 2: $rpId
+        $allowedCredentials,                   // Arg 3: $allowCredentials
+        'required',                            // Arg 4: $userVerification
+        30000                                  // Arg 5: $timeout (intero)
     );
-    debug_log("Checkpoint: login_start.php - requestOptions create con ::create() (5 argomenti).");
-    // --- FINE CORREZIONE ---
+
+    debug_log("Checkpoint: login_start.php - Oggetto PHP requestOptions creato (non stampabile).");
     
+    // Salviamo l'OGGETTO PHP nella sessione per il 'finish'
     $_SESSION['webauthn_request_options'] = $requestOptions;
     $_SESSION['webauthn_user_data'] = $user;
-    debug_log("Checkpoint: login_start.php - Dati salvati in SESSIONE.");
+    debug_log("Checkpoint: login_start.php - Dati (OGGETTO PHP) salvati in SESSIONE.");
 
-    send_json_response(['success' => true, 'options' => $requestOptions]);
+    // --- INIZIO COSTRUZIONE MANUALE RISPOSTA per simplewebauthn (JS) ---
+    
+    $options_js = [
+        // --- QUESTA È LA CORREZIONE (USO DI base64url_encode) ---
+        'challenge' => base64url_encode($requestOptions->getChallenge()), // <-- Conversione
+        'timeout' => $requestOptions->getTimeout(),
+        'rpId' => $requestOptions->getRpId(),
+        'userVerification' => $requestOptions->getUserVerification(),
+        'allowCredentials' => []
+    ];
+
+    // Converti i descrittori
+    foreach ($requestOptions->getAllowCredentials() as $descriptor) {
+        $options_js['allowCredentials'][] = [
+            'type' => $descriptor->getType(),
+            // --- QUESTA È LA CORREZIONE (USO DI base64url_encode) ---
+            'id' => base64url_encode($descriptor->getId()), // <-- Conversione
+            'transports' => $descriptor->getTransports()
+        ];
+    }
+
+    $responseData = ['success' => true, 'options' => $options_js];
+    // --- FINE COSTRUZIONE MANUALE ---
+
+    debug_log("Checkpoint: login_start.php (DEBUG) - Invio al browser (Formato JS Manuale):\n" . json_encode($responseData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+
+    send_json_response($responseData); // Invia l'array $responseData mappato manualmente
 
 } catch (Throwable $e) {
     debug_log("ERRORE FATALE (login_start.php): " . $e->getMessage() . "\nFile: " . $e->getFile() . "\nRiga: " . $e->getLine() . "\nTrace: " . $e->getTraceAsString());
